@@ -47,18 +47,17 @@
 #
 # 0) Specify compiler and linker:
 
-CXX=/usr/local/bin/g++
-LINKER=/usr/local/bin/g++
-#CXX=mpicxx
-#LINKER=mpicxx
+CXX=sst++
+LINKER=sst++
+CXX=mpicxx
+LINKER=mpicxx
 
 
 # 1) Build with MPI or not?
 #    If you want to run the program with MPI, make sure USE_MPI is set 
 #    to -DUSING_MPI
 
-USE_MPI =
-#USE_MPI = -DUSING_MPI
+USE_MPI = -DUSING_MPI
 
 
 # 2) MPI headers:  
@@ -77,7 +76,7 @@ USE_MPI =
 
 #IA32 with GCC: 
 #CPP_OPT_FLAGS = -O3 -funroll-all-loops -malign-double
-CPP_OPT_FLAGS = -O3 -ftree-vectorize -ftree-vectorizer-verbose=2
+CPP_OPT_FLAGS = -O0 -g -ftree-vectorize 
 
 #
 # 4) MPI library:
@@ -116,11 +115,11 @@ TARGET = test_HPCCG
 
 ################### Derived Quantities (no modification required) ##############
 
-CXXFLAGS= $(CPP_OPT_FLAGS) $(OMP_FLAGS) $(USE_OMP) $(USE_MPI) $(MPI_INC)
+CXXFLAGS= $(CPP_OPT_FLAGS) $(OMP_FLAGS) $(USE_OMP) $(USE_MPI) $(MPI_INC) -std=c++1y
 
 LIB_PATHS= $(SYS_LIB)
 
-TEST_CPP = main.cpp generate_matrix.cpp read_HPC_row.cpp \
+TEST_CPP = main.cpp generate_matrix.cpp \
 	  compute_residual.cpp mytimer.cpp dump_matlab_matrix.cpp \
           HPC_sparsemv.cpp HPCCG.cpp waxpby.cpp ddot.cpp \
           make_local_matrix.cpp exchange_externals.cpp \

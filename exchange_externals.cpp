@@ -40,7 +40,6 @@
 // ************************************************************************
 //@HEADER
 
-#ifdef USING_MPI  // Compile this routine only if running in parallel
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -62,7 +61,7 @@ void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
   int * neighbors = A->neighbors;
   double * send_buffer = A->send_buffer;
   int total_to_be_sent = A->total_to_be_sent;
-  int * elements_to_send = A->elements_to_send;
+  auto elements_to_send = A->elements_to_send;
   
   int size, rank; // Number of MPI processes, My process ID
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -82,51 +81,46 @@ void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
   // Externals are at end of locals
   //
   double *x_external = (double *) x + local_nrow;
+  int offset = local_nrow;
 
   // Post receives first 
-  for (i = 0; i < num_neighbors; i++) 
-    {
-      int n_recv = recv_length[i];
-      MPI_Irecv(x_external, n_recv, MPI_DOUBLE, neighbors[i], MPI_MY_TAG, 
-		MPI_COMM_WORLD, request+i);
-      x_external += n_recv;
-    }
+  for (i = 0; i < num_neighbors; i++) {
+    int n_recv = recv_length[i];
+    MPI_Irecv(x_external, n_recv, MPI_DOUBLE, neighbors[i], MPI_MY_TAG,
+      MPI_COMM_WORLD, request+i);
+    x_external += n_recv;
+    offset += n_recv;
+  }
 
 
   //
   // Fill up send buffer
   //
 
-  for (i=0; i<total_to_be_sent; i++) send_buffer[i] = x[elements_to_send[i]];
+  for (i=0; i<total_to_be_sent; i++){
+    send_buffer[i] = x[elements_to_send[i]];
+  }
 
   //
   // Send to each neighbor
   //
 
-  for (i = 0; i < num_neighbors; i++) 
-    {
-      int n_send = send_length[i];
-      MPI_Send(send_buffer, n_send, MPI_DOUBLE, neighbors[i], MPI_MY_TAG, 
-	       MPI_COMM_WORLD);
-      send_buffer += n_send;
-    }
+  for (i = 0; i < num_neighbors; i++) {
+    int n_send = send_length[i];
+    MPI_Send(send_buffer, n_send, MPI_DOUBLE, neighbors[i], MPI_MY_TAG,
+       MPI_COMM_WORLD);
+    send_buffer += n_send;
+  }
 
   //
   // Complete the reads issued above
   //
 
   MPI_Status status;
-  for (i = 0; i < num_neighbors; i++)
-    {
-      if ( MPI_Wait(request+i, &status) )
-	{
-	  cerr << "MPI_Wait error\n"<<endl;
-	  exit(-1);
-	}
-    }
+  for (i = 0; i < num_neighbors; i++){
+    MPI_Wait(request+i, &status);
+  }
 
   delete [] request;
-
   return;
 }
-#endif // USING_MPI

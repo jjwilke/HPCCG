@@ -78,8 +78,7 @@ int HPC_sparsemv( HPC_Sparse_Matrix *A,
       const double * const cur_vals = 
      (const double * const) A->ptr_to_vals_in_row[i];
 
-      const int    * const cur_inds = 
-     (const int    * const) A->ptr_to_inds_in_row[i];
+      const auto    * const cur_inds = A->ptr_to_inds_in_row[i];
 
       const int cur_nnz = (const int) A->nnz_in_row[i];
 

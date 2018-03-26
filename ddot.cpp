@@ -68,7 +68,6 @@ int ddot (const int n, const double * const x, const double * const y,
 #endif
     for (int i=0; i<n; i++) local_result += x[i]*y[i];
 
-#ifdef USING_MPI
   // Use MPI's reduce function to collect all partial sums
   double t0 = mytimer();
   double global_result = 0.0;
@@ -76,9 +75,6 @@ int ddot (const int n, const double * const x, const double * const y,
                 MPI_COMM_WORLD);
   *result = global_result;
   time_allreduce += mytimer() - t0;
-#else
-  *result = local_result;
-#endif
 
   return(0);
 }

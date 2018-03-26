@@ -72,8 +72,8 @@ int dump_matlab_matrix( HPC_Sparse_Matrix *A, int rank) {
 
   for (int i=0; i< nrow; i++) {
       const double * const cur_vals = A->ptr_to_vals_in_row[i];
-      const int    * const cur_inds = A->ptr_to_inds_in_row[i];
-      const int cur_nnz = A->nnz_in_row[i];
+      auto const    * const cur_inds = A->ptr_to_inds_in_row[i];
+      const auto cur_nnz = A->nnz_in_row[i];
       for (int j=0; j< cur_nnz; j++) fprintf(handle, " %d %d %22.16e\n",start_row+i+1,cur_inds[j]+1,cur_vals[j]);
     }
 

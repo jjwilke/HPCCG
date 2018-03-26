@@ -79,7 +79,6 @@ using std::endl;
 #include <omp.h>
 #endif
 #include "generate_matrix.hpp"
-#include "read_HPC_row.hpp"
 #include "mytimer.hpp"
 #include "HPC_sparsemv.hpp"
 #include "compute_residual.hpp"
@@ -92,6 +91,7 @@ using std::endl;
 
 #undef DEBUG
 
+#define sstmac_app_name hpccg
 int main(int argc, char *argv[])
 {
 
@@ -134,27 +134,28 @@ int main(int argc, char *argv[])
 #endif
 
 
-  if(argc != 2 && argc!=4) {
+  if(argc!=7) {
     if (rank==0)
       cerr << "Usage:" << endl
-	   << "Mode 1: " << argv[0] << " nx ny nz" << endl
-	   << "     where nx, ny and nz are the local sub-block dimensions, or" << endl
-	   << "Mode 2: " << argv[0] << " HPC_data_file " << endl
-	   << "     where HPC_data_file is a globally accessible file containing matrix data." << endl;
+     << "Mode 1: " << argv[0] << " nx ny nz procX procY procZ" << endl
+     << "     where nx, ny and nz are the local sub-block dimensions, or" << endl;
     exit(1);
   }
 
-  if (argc==4) 
-  {
-    nx = atoi(argv[1]);
-    ny = atoi(argv[2]);
-    nz = atoi(argv[3]);
-    generate_matrix(nx, ny, nz, &A, &x, &b, &xexact);
-  }
-  else
-  {
-    read_HPC_row(argv[1], &A, &x, &b, &xexact);
-  }
+  nx = atoi(argv[1]);
+  ny = atoi(argv[2]);
+  nz = atoi(argv[3]);
+  int xGrid = atoi(argv[4]);
+  int yGrid = atoi(argv[5]);
+  int zGrid = atoi(argv[6]);
+  int myZ = rank / (xGrid*yGrid);
+  int rem = rank % (xGrid*yGrid);
+  int myY = rem / xGrid;
+  int myX = rem % xGrid;
+  generate_matrix(nx, ny, nz,
+                  myX, myY, myZ,
+                  xGrid, yGrid, zGrid,
+                  &A, &x, &b, &xexact);
 
 
   bool dump_matrix = false;
