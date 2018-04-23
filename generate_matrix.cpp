@@ -62,18 +62,13 @@ void generate_matrix(int nx, int ny, int nz,
                      int myX, int myY, int myZ,
                      int xGrid, int yGrid, int zGrid,
                      HPC_Sparse_Matrix **Aptr,
-                     double **xPtr, double **bPtr, double **xexactPtr)
+                     double **xPtr, double **bPtr, double **xexactPtr,
+                     MPI_Comm comm)
 
 {
-#ifdef DEBUG
-  int debug = 1;
-#else
-  int debug = 0;
-#endif
-
   int size, rank; // Number of MPI processes, My process ID
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(comm, &size);
+  MPI_Comm_rank(comm, &rank);
 
   auto A = new HPC_Sparse_Matrix; // Allocate matrix struct and fill it
   A->title = 0;
@@ -178,11 +173,6 @@ void generate_matrix(int nx, int ny, int nz,
       } // end ix loop
      } // end iy loop
   } // end iz loop  
-  if (debug) cout << "Process "<<rank<<" of "<<size<<" has "<<local_nrow;
-  
-  if (debug) cout << "Process "<<rank<<" of "<<size
-		  <<" has "<<local_nnz<<" nonzeros."<<endl;
-
   A->total_nrow = total_nrow;
   A->total_nnz = total_nnz;
   A->local_nrow = local_nrow;

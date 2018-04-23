@@ -53,7 +53,7 @@ using std::endl;
 #include "make_local_matrix.hpp"
 #include "mytimer.hpp"
 //#define DEBUG
-void make_local_matrix(HPC_Sparse_Matrix * A)
+void make_local_matrix(HPC_Sparse_Matrix * A, MPI_Comm comm)
 {
   std::map<global_t, int> externals;
   int i, j, k;
@@ -61,17 +61,12 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   double t0;
 
   int debug_details = 0; // Set to 1 for voluminous output
-#ifdef DEBUG
-  int debug = 1;
-#else
-  int debug = 0;
-#endif
 
   // Get MPI process info
 
   int size, rank; // Number of MPI processes, My process ID
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(comm, &size);
+  MPI_Comm_rank(comm, &rank);
 
   
   // Extract Matrix pieces
@@ -100,8 +95,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   ///////////////////////////////////////////
   // Scan the indices and transform to local
     ///////////////////////////////////////////
-
-  if (debug) t0 = mytimer();
 
   auto external_index = new global_t[max_external];
   auto external_local_index = new int[max_external];
@@ -133,18 +126,9 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
     }
   }
 
-  if (debug) {
-    t0 = mytimer() - t0;
-    cout << "            Time in transform to local phase = " << t0 << endl;
-    cout << "Processor " << rank << " of " << size <<
-	       ": Number of external equations = " << num_external << endl;
-  }
-
   ////////////////////////////////////////////////////////////////////////////
   // Go through list of externals to find out which processors must be accessed.
   ////////////////////////////////////////////////////////////////////////////
-
-  if (debug) t0 = mytimer();
 
   A->num_external = num_external;
   int * tmp_buffer  = new int[size];  // Temp buffer space needed below
@@ -168,8 +152,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   // have consecutive indices).
   ////////////////////////////////////////////////////////////////////////////
 
-  if (debug) t0 = mytimer();
-
   int count = local_nrow;
   for (i = 0; i < num_external; i++) external_local_index[i] = -1;
 
@@ -185,12 +167,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
     }
   }
 
-  if (debug) {
-    t0 = mytimer() - t0;
-    cout << "           Time in scanning external indices phase = " << t0 << endl;
-  }
-  if (debug) t0 = mytimer();
-
 
   for (i=0; i< local_nrow; i++){
     for (j=0; j<nnz_in_row[i]; j++){
@@ -205,11 +181,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   for (i = 0; i < num_external; i++){
     new_external_processor[external_local_index[i] - local_nrow] =
       external_processor[i];
-  }
-
-  if (debug) {
-    t0 = mytimer() - t0;
-    cout << "           Time in assigning external indices phase = " << t0 << endl;
   }
 
   if (debug_details){
@@ -250,8 +221,7 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   }
 
   /// sum over all processors all the tmp_neighbors arrays ///
-  MPI_Allreduce(tmp_neighbors, tmp_buffer, size, MPI_INT, MPI_SUM, 
-		MPI_COMM_WORLD);
+  MPI_Allreduce(tmp_neighbors, tmp_buffer, size, MPI_INT, MPI_SUM, comm);
 
   /// decode the combined 'tmp_neighbors' (stored in tmp_buffer) 
   //  array from all the processors
@@ -280,21 +250,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
     abort();
   }
   delete [] tmp_neighbors;
-
-  if (debug) {
-    t0 = mytimer() - t0;
-    cout << "           Time in finding neighbors phase = " << t0 << endl;
-  }
-  if (debug) cout << "Processor " << rank << " of " << size <<
-	       ": Number of send neighbors = " << num_send_neighbors << endl;
-
-  if (debug) cout << "Processor " << rank << " of " << size <<
-	       ": Number of receive neighbors = " << num_recv_neighbors << endl;
-
-  if (debug) cout << "Processor " << rank << " of " << size <<
-	       ": Total number of elements to send = " << total_to_be_sent << endl;
-
-  if (debug) MPI_Barrier(MPI_COMM_WORLD);
 
   /////////////////////////////////////////////////////////////////////////
   ///
@@ -330,14 +285,13 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   MPI_Request * request = new MPI_Request[max_num_messages];
   for (i = 0; i < num_send_neighbors; i++){
     MPI_Irecv(tmp_buffer+i, 1, MPI_INT, MPI_ANY_SOURCE, MPI_MY_TAG,
-      MPI_COMM_WORLD, request+i);
+      comm, request+i);
   }
 
   // send messages 
 
   for (i = 0; i < num_recv_neighbors; i++) {
-    MPI_Send(tmp_buffer+i, 1, MPI_INT, recv_list[i], MPI_MY_TAG,
-          MPI_COMM_WORLD);
+    MPI_Send(tmp_buffer+i, 1, MPI_INT, recv_list[i], MPI_MY_TAG, comm);
   }
   ///
    // Receive message from each send neighbor to construct 'send_list'.
@@ -366,9 +320,6 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
     }
 
     if (found == 0) {
-      if (debug) cout << "Processor " << rank << " of " << size <<
-             ": recv_list[" << num_recv_neighbors <<"] = "
-          << send_list[j] << endl;
       recv_list[num_recv_neighbors] = send_list[j];
       (num_recv_neighbors)++;
     }
@@ -416,8 +367,7 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
 
   for (i = 0; i < num_recv_neighbors; i++) {
     int partner = recv_list[i];
-    MPI_Irecv(lengths+i, 1, MPI_INT, partner, MPI_MY_TAG, MPI_COMM_WORLD,
-        request+i);
+    MPI_Irecv(lengths+i, 1, MPI_INT, partner, MPI_MY_TAG, comm, request+i);
   }
 
   int* neighbors = new int[max_num_neighbors];
@@ -446,7 +396,7 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
     neighbors[i]  = recv_list[i];
 
     length = j - start;
-    MPI_Send(&length, 1, MPI_INT, recv_list[i], MPI_MY_TAG, MPI_COMM_WORLD);
+    MPI_Send(&length, 1, MPI_INT, recv_list[i], MPI_MY_TAG, comm);
   }
 
   // Complete the receives of the number of externals
@@ -467,7 +417,7 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
   j = 0;
   for (i = 0; i < num_recv_neighbors; i++){
     MPI_Irecv(elements_to_send+j, send_length[i], MPI_INT64_T, neighbors[i],
-      MPI_MY_TAG, MPI_COMM_WORLD, request+i);
+      MPI_MY_TAG, comm, request+i);
     j += send_length[i];
   }
 
@@ -487,7 +437,7 @@ void make_local_matrix(HPC_Sparse_Matrix * A)
       if (j == num_external) break;
     }
     MPI_Send(new_external+start, j-start, MPI_INT64_T, recv_list[i],
-	       MPI_MY_TAG, MPI_COMM_WORLD);
+         MPI_MY_TAG, comm);
   }
 
   // receive from each neighbor the global index list of external elements

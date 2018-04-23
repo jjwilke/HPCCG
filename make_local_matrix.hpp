@@ -41,9 +41,9 @@
 //@HEADER
 #ifndef MAKE_LOCAL_MATRIX_H
 #define MAKE_LOCAL_MATRIX_H
-#ifdef USING_MPI
+
 #include <mpi.h>
-#endif
+
 #include "HPC_Sparse_Matrix.hpp"
-void make_local_matrix(HPC_Sparse_Matrix *A);
+void make_local_matrix(HPC_Sparse_Matrix *A, MPI_Comm comm);
 #endif

@@ -47,7 +47,7 @@ using std::endl;
 #include <cstdio>
 #include "exchange_externals.hpp"
 #undef DEBUG
-void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
+void exchange_externals(HPC_Sparse_Matrix * A, const double *x, MPI_Comm comm)
 {
   int i, j, k;
   int num_external = 0;
@@ -64,8 +64,8 @@ void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
   auto elements_to_send = A->elements_to_send;
   
   int size, rank; // Number of MPI processes, My process ID
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(comm, &size);
+  MPI_Comm_rank(comm, &rank);
 
   //
   //  first post receives, these are immediate receives
@@ -87,7 +87,7 @@ void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
   for (i = 0; i < num_neighbors; i++) {
     int n_recv = recv_length[i];
     MPI_Irecv(x_external, n_recv, MPI_DOUBLE, neighbors[i], MPI_MY_TAG,
-      MPI_COMM_WORLD, request+i);
+      comm, request+i);
     x_external += n_recv;
     offset += n_recv;
   }
@@ -107,8 +107,7 @@ void exchange_externals(HPC_Sparse_Matrix * A, const double *x)
 
   for (i = 0; i < num_neighbors; i++) {
     int n_send = send_length[i];
-    MPI_Send(send_buffer, n_send, MPI_DOUBLE, neighbors[i], MPI_MY_TAG,
-       MPI_COMM_WORLD);
+    MPI_Send(send_buffer, n_send, MPI_DOUBLE, neighbors[i], MPI_MY_TAG, comm);
     send_buffer += n_send;
   }
 

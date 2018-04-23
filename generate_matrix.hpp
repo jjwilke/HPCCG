@@ -42,14 +42,15 @@
 
 #ifndef GENERATE_MATRIX_H
 #define GENERATE_MATRIX_H
-#ifdef USING_MPI
+
 #include <mpi.h>
-#endif
+
 #include "HPC_Sparse_Matrix.hpp"
 
 void generate_matrix(int nx, int ny, int nz,
                      int myX, int myY, int myZ,
                      int xGrid, int yGrid, int zGrid,
                      HPC_Sparse_Matrix **A,
-                     double **x, double **b, double **xexact);
+                     double **x, double **b, double **xexact,
+                     MPI_Comm comm);
 #endif

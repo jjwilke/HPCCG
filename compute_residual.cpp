@@ -57,7 +57,8 @@ using std::fabs;
 #include "compute_residual.hpp"
 
 int compute_residual(const int n, const double * const v1, 
-		     const double * const v2, double * const residual)
+         const double * const v2, double * const residual,
+         MPI_Comm comm)
 {
   double local_residual = 0.0;
   
@@ -65,17 +66,12 @@ int compute_residual(const int n, const double * const v1,
     double diff = fabs(v1[i] - v2[i]);
     if (diff > local_residual) local_residual = diff;
   }
-#ifdef USING_MPI
-  // Use MPI's reduce function to collect all partial sums
 
+  // Use MPI's reduce function to collect all partial sums
   double global_residual = 0;
-  
-  MPI_Allreduce(&local_residual, &global_residual, 1, MPI_DOUBLE, MPI_MAX,
-                MPI_COMM_WORLD);
+  MPI_Allreduce(&local_residual, &global_residual, 1, MPI_DOUBLE, MPI_MAX, comm);
+
   *residual = global_residual;
-#else
-  *residual = local_residual;
-#endif
 
   return(0);
 }

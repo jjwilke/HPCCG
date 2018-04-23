@@ -40,10 +40,7 @@
 // ************************************************************************
 //@HEADER
 #include "HPC_Sparse_Matrix.hpp"
-
-#ifdef USING_MPI
 #include <mpi.h>
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +75,6 @@ void destroyMatrix(HPC_Sparse_Matrix * &A)
     delete [] A->ptr_to_diags;
   }
 
-#ifdef USING_MPI
   if(A->external_index)
   {
     delete [] A->external_index;
@@ -107,7 +103,6 @@ void destroyMatrix(HPC_Sparse_Matrix * &A)
   {
     delete [] A->send_buffer;
   }
-#endif
 
   delete A;
   A = 0;
@@ -158,8 +153,6 @@ void destroySharedMemMatrix(HPC_Sparse_Matrix * &A)
     delete [] A->ptr_to_diags;
   }
 
-
-#ifdef USING_MPI
   if(A->external_index)
   {
     delete [] A->external_index;
@@ -188,8 +181,6 @@ void destroySharedMemMatrix(HPC_Sparse_Matrix * &A)
   {
     delete [] A->send_buffer;
   }
-#endif
-
   MPI_Comm_free_mem(MPI_COMM_NODE,A); A=0;
 
 }

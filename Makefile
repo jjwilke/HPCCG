@@ -120,10 +120,9 @@ CXXFLAGS= $(CPP_OPT_FLAGS) $(OMP_FLAGS) $(USE_OMP) $(USE_MPI) $(MPI_INC) -std=c+
 LIB_PATHS= $(SYS_LIB)
 
 TEST_CPP = main.cpp generate_matrix.cpp \
-	  compute_residual.cpp mytimer.cpp dump_matlab_matrix.cpp \
+	  compute_residual.cpp mytimer.cpp \
           HPC_sparsemv.cpp HPCCG.cpp waxpby.cpp ddot.cpp \
-          make_local_matrix.cpp exchange_externals.cpp \
-          YAML_Element.cpp YAML_Doc.cpp
+          make_local_matrix.cpp exchange_externals.cpp 
 
 TEST_OBJ          = $(TEST_CPP:.cpp=.o)
 

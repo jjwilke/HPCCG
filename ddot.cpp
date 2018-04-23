@@ -54,7 +54,7 @@
 
 #include "ddot.hpp"
 int ddot (const int n, const double * const x, const double * const y, 
-	  double * const result, double & time_allreduce)
+    double * const result, MPI_Comm comm)
 {  
   double local_result = 0.0;
   if (y==x)
@@ -71,10 +71,8 @@ int ddot (const int n, const double * const x, const double * const y,
   // Use MPI's reduce function to collect all partial sums
   double t0 = mytimer();
   double global_result = 0.0;
-  MPI_Allreduce(&local_result, &global_result, 1, MPI_DOUBLE, MPI_SUM, 
-                MPI_COMM_WORLD);
+  MPI_Allreduce(&local_result, &global_result, 1, MPI_DOUBLE, MPI_SUM, comm);
   *result = global_result;
-  time_allreduce += mytimer() - t0;
 
   return(0);
 }

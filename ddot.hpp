@@ -41,13 +41,10 @@
 //@HEADER
 #ifndef DDOT_H
 #define DDOT_H
-#ifdef USING_MPI
+
 #include <mpi.h>
 #include "mytimer.hpp"
-#endif
-
-
 
 int ddot (const int n, const double * const x, const double * const y, 
-	  double * const result, double & time_allreduce);
+    double * const result, MPI_Comm comm);
 #endif

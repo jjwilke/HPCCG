@@ -47,14 +47,17 @@
 #include "waxpby.hpp"
 #include "HPC_Sparse_Matrix.hpp"
 
-#ifdef USING_MPI
 #include "exchange_externals.hpp"
-#include <mpi.h> // If this routine is compiled with -DUSING_MPI
-                 // then include mpi.h
-#endif
+#include <mpi.h>
+
+void init(HPC_Sparse_Matrix*& A, double*& x, double*& b, double*& xexact, 
+          MPI_Comm comm,
+          int xGrid, int yGrid, int zGrid,
+          int nx, int ny, int nz);
+
 int HPCCG(HPC_Sparse_Matrix * A,
 	  const double * const b, double * const x,
-	  const int max_iter, const double tolerance, int & niters, double & normr, double * times);
+    const int max_iter, const double tolerance, int & niters, double & normr, MPI_Comm comm);
 
 // this function will compute the Conjugate Gradient...
 // A <=> Matrix
